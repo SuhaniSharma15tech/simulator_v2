@@ -1,19 +1,21 @@
 import psycopg2
 import psycopg2.pool
 import psycopg2.extras
-from dotenv import load_dotenv
 import os
+import streamlit as st
 
-load_dotenv()
 
 _pool = psycopg2.pool.ThreadedConnectionPool(
     minconn=1,
     maxconn=5,
-    host=os.getenv("DB_HOST", "localhost"),
-    port=int(os.getenv("DB_PORT", 5432)),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    dbname=os.getenv("DB_NAME"),
+    # Replace os.getenv with st.secrets
+    host = st.secrets["DB_HOST"],
+    port = int(st.secrets["DB_PORT"]),
+    user = st.secrets["DB_USER"],
+    password = st.secrets["DB_PASSWORD"],
+    dbname = st.secrets["DB_NAME"],
+    sslmode = "require"
+
 )
 
 def get_conn():
