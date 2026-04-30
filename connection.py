@@ -17,9 +17,7 @@ _pool = psycopg2.pool.ThreadedConnectionPool(
 )
 
 def get_conn():
-    conn = _pool.getconn()
-    conn.autocommit = False
-    return conn
+    return _pool.getconn()
 
 def _release(conn):
     _pool.putconn(conn)
@@ -55,7 +53,7 @@ def execute_many(sql, param_list):
     conn = get_conn()
     try:
         cur = conn.cursor()
-        cur.executemany(sql, param_list)
+        psycopg2.extras.execute_batch(cur, sql, param_list)
         conn.commit()
         cur.close()
     except Exception:
@@ -71,14 +69,14 @@ def transaction(operations):
     Rolls back everything if any step fails.
     """
     conn = get_conn()
-    cur  = conn.cursor()
     try:
+        cur = conn.cursor()
         for sql, params in operations:
             cur.execute(sql, params or ())
         conn.commit()
+        cur.close()
     except Exception as e:
         conn.rollback()
         raise e
     finally:
-        cur.close()
         _release(conn)
